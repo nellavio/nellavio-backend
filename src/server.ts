@@ -4,9 +4,20 @@ import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import compress from "@fastify/compress";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 import { auth } from "./auth.js";
 import schema from "./graphql/schema.js";
 import { validateEnv } from "./config.js";
+import { prisma } from "./db.js";
+
+// Get package.json for version info
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, "../../package.json"), "utf-8")
+);
 
 // Validate environment variables before starting
 validateEnv();
@@ -121,10 +132,108 @@ await fastify.register(mercurius, {
 });
 
 // Health check endpoint
-fastify.get("/health", async () => ({
-  status: "ok",
-  timestamp: new Date().toISOString(),
-}));
+fastify.get("/health", async (request, reply) => {
+  const startTime = Date.now();
+
+  // Check database connection
+  let dbStatus = "healthy";
+  let dbResponseTime = 0;
+  let dbError = null;
+  try {
+    const dbStart = Date.now();
+    await prisma.$queryRaw`SELECT 1`;
+    dbResponseTime = Date.now() - dbStart;
+  } catch (error) {
+    dbStatus = "unhealthy";
+    dbError = error instanceof Error ? error.message : "Unknown error";
+    fastify.log.error({ err: error }, "Database health check failed");
+  }
+
+  // Calculate uptime
+  const uptime = process.uptime();
+
+  // Memory usage with percentage
+  const memoryUsage = process.memoryUsage();
+  const heapUsedPercent = Math.round(
+    (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100
+  );
+  const memoryUsageMB = {
+    rss: Math.round(memoryUsage.rss / 1024 / 1024),
+    heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+    heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+    heapUsedPercent: `${heapUsedPercent}%`,
+    external: Math.round(memoryUsage.external / 1024 / 1024),
+    arrayBuffers: Math.round(memoryUsage.arrayBuffers / 1024 / 1024),
+  };
+
+  // CPU usage (in microseconds)
+  const cpuUsage = process.cpuUsage();
+  const cpuUsageMs = {
+    user: Math.round(cpuUsage.user / 1000), // Convert to milliseconds
+    system: Math.round(cpuUsage.system / 1000),
+    total: Math.round((cpuUsage.user + cpuUsage.system) / 1000),
+  };
+
+  const totalResponseTime = Date.now() - startTime;
+  const isHealthy = dbStatus === "healthy";
+  const isReady = isHealthy; // Ready to serve traffic only if DB is healthy
+
+  const healthData = {
+    status: isHealthy ? "healthy" : "degraded",
+    ready: isReady,
+    alive: true, // Process is alive since it's responding
+    timestamp: new Date().toISOString(),
+
+    version: {
+      api: packageJson.version,
+      name: packageJson.name,
+      node: process.version,
+    },
+
+    uptime: {
+      seconds: Math.round(uptime),
+      human: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`,
+    },
+
+    database: {
+      status: dbStatus,
+      responseTime: `${dbResponseTime}ms`,
+      ...(dbError && { error: dbError }),
+    },
+
+    memory: {
+      usage: memoryUsageMB,
+      unit: "MB",
+    },
+
+    cpu: {
+      usage: cpuUsageMs,
+      unit: "milliseconds",
+    },
+
+    process: {
+      pid: process.pid,
+      platform: process.platform,
+      arch: process.arch,
+      environment: process.env.NODE_ENV || "development",
+    },
+
+    endpoints: {
+      graphql: "/graphql",
+      auth: "/api/auth/*",
+      health: "/health",
+    },
+
+    responseTime: `${totalResponseTime}ms`,
+  };
+
+  // Return 503 if unhealthy (for load balancers)
+  if (!isHealthy) {
+    return reply.status(503).send(healthData);
+  }
+
+  return reply.status(200).send(healthData);
+});
 
 // Graceful shutdown
 const signals = ["SIGINT", "SIGTERM"];
