@@ -77,7 +77,7 @@ model HomeSmallCard {
   @@map("home_small_cards")
 }
 
-model OldHomeSmallCard {
+model HomeSmallCard2 {
   id          String  @id @default(uuid())
   title       String
   metric      String
@@ -90,7 +90,23 @@ model OldHomeSmallCard {
   changeText  String
   chartData   Json
 
-  @@map("old_home_small_cards")
+  @@map("home_small_cards_2")
+}
+
+model HomeSmallCard3 {
+  id          String  @id @default(uuid())
+  title       String
+  metric      String
+  metricPrev  String
+  delta       String
+  deltaType   String
+  color       String
+  increased   Boolean
+  changeValue Float
+  changeText  String
+  chartData   Json
+
+  @@map("home_small_cards_3")
 }
 
 model MonthPerformance {

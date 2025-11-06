@@ -9,9 +9,9 @@ import {
   CustomerType,
   EventType,
   HomeSmallCardType,
-  OldHomeSmallCardType,
+  HomeSmallCard2Type,
   HomepageType,
-  OldHomepageType,
+  Homepage2Type,
   MarketMetricsType,
   MonthPerformanceType,
   NotificationType,
@@ -68,10 +68,10 @@ const RootQuery = new GraphQLObjectType({
         return prisma.homeSmallCard.findMany();
       },
     },
-    oldHomeSmallCards: {
-      type: new GraphQLList(OldHomeSmallCardType),
+    homeSmallCards2: {
+      type: new GraphQLList(HomeSmallCard2Type),
       resolve() {
-        return prisma.oldHomeSmallCard.findMany();
+        return prisma.homeSmallCard2.findMany();
       },
     },
     monthPerformance: {
@@ -232,13 +232,13 @@ const RootQuery = new GraphQLObjectType({
         );
       },
     },
-    oldHomepage: {
-      type: OldHomepageType,
+    homepage2: {
+      type: Homepage2Type,
       resolve() {
         return Promise.all([
           prisma.bestSellingProduct.findMany(),
           prisma.customerSatisfaction.findMany(),
-          prisma.oldHomeSmallCard.findMany(),
+          prisma.homeSmallCard2.findMany(),
           prisma.region.findMany(),
           prisma.revenueOverTime.findMany(),
           prisma.revenuePerCountry.findMany(),
@@ -273,7 +273,7 @@ const schema: GraphQLSchema = new GraphQLSchema({
     CustomerSatisfactionType,
     EventType,
     HomeSmallCardType,
-    OldHomeSmallCardType,
+    HomeSmallCard2Type,
     MonthPerformanceType,
     NotificationType,
     OrderType,
@@ -291,7 +291,7 @@ const schema: GraphQLSchema = new GraphQLSchema({
     WeeklyActivityType,
     AnalyticsType,
     HomepageType,
-    OldHomepageType,
+    Homepage2Type,
   ],
 });
 

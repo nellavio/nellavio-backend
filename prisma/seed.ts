@@ -1,27 +1,26 @@
 import { PrismaClient } from "@prisma/client";
 
-import { assetPerformanceData } from "../src/data/analytics/assetPerformance";
-import { bestSellingProductsData } from "../src/data/homepage/bestSellingProducts";
-import { customerSatisfactionData } from "../src/data/homepage/customerSatisfaction";
-import { customersData } from "../src/data/customers";
-import { eventsData } from "../src/data/events";
-import { homeSmallCardsData } from "../src/data/homepage/homeSmallCards";
-import { homeSmallCardsData as oldHomeSmallCardsData } from "../src/data/oldHomepage/homeSmallCards";
-import { performanceData } from "../src/data/analytics/performance";
-import { ordersData } from "../src/data/orders";
-import { productsData } from "../src/data/products";
-import { regionsData } from "../src/data/oldHomepage/regions";
-import { revenueOverTimeData } from "../src/data/homepage/revenueOverTime";
-import { revenuePerCountryData } from "../src/data/homepage/revenuePerCountry";
-import { todaySalesData } from "../src/data/analytics/todaySales";
-import { totalProfitMonthsData } from "../src/data/analytics/totalProfitMonths";
-import { totalProfitProductsData } from "../src/data/analytics/totalProfitProducts";
-import { yearOverviewData } from "../src/data/analytics/yearOverview";
-import { marketMetricsData } from "../src/data/analytics/marketMetrics";
-import { revenueDistributionData } from "../src/data/analytics/revenueDistribution";
-import { weeklyPerformanceData } from "../src/data/homepage/weeklyPerformance";
-import { weeklyActivitiesData } from "../src/data/homepage/weeklyActivities";
-import { notificationsData } from "../src/data/notifications";
+import { assetPerformanceData } from "../src/data/analytics/assetPerformance.js";
+import { bestSellingProductsData } from "../src/data/homepage/bestSellingProducts.js";
+import { customerSatisfactionData } from "../src/data/homepage/customerSatisfaction.js";
+import { customersData } from "../src/data/customers.js";
+import { eventsData } from "../src/data/events.js";
+import { homeSmallCardsData } from "../src/data/homepage/homeSmallCards.js";
+import { homeSmallCardsData as homepage2SmallCardsData } from "../src/data/homepage/homeSmallCards.js";
+import { performanceData } from "../src/data/analytics/performance.js";
+import { ordersData } from "../src/data/orders.js";
+import { productsData } from "../src/data/products.js";
+import { revenueOverTimeData } from "../src/data/homepage/revenueOverTime.js";
+import { revenuePerCountryData } from "../src/data/homepage/revenuePerCountry.js";
+import { todaySalesData } from "../src/data/analytics/todaySales.js";
+import { totalProfitMonthsData } from "../src/data/analytics/totalProfitMonths.js";
+import { totalProfitProductsData } from "../src/data/analytics/totalProfitProducts.js";
+import { yearOverviewData } from "../src/data/analytics/yearOverview.js";
+import { marketMetricsData } from "../src/data/analytics/marketMetrics.js";
+import { revenueDistributionData } from "../src/data/analytics/revenueDistribution.js";
+import { weeklyPerformanceData } from "../src/data/homepage/weeklyPerformance.js";
+import { weeklyActivitiesData } from "../src/data/homepage/weeklyActivities.js";
+import { notificationsData } from "../src/data/notifications.js";
 
 const prisma = new PrismaClient();
 
@@ -33,7 +32,7 @@ async function main() {
   await prisma.customerSatisfaction.deleteMany();
   await prisma.event.deleteMany();
   await prisma.homeSmallCard.deleteMany();
-  await prisma.oldHomeSmallCard.deleteMany();
+  await prisma.homeSmallCard2.deleteMany();
   await prisma.monthPerformance.deleteMany();
   await prisma.order.deleteMany();
   await prisma.product.deleteMany();
@@ -43,7 +42,7 @@ async function main() {
   await prisma.todaySales.deleteMany();
   await prisma.totalProfitMonth.deleteMany();
   await prisma.totalProfitProduct.deleteMany();
-  
+
   await prisma.yearOverview.deleteMany();
   await prisma.marketMetrics.deleteMany();
   await prisma.revenueDistribution.deleteMany();
@@ -81,9 +80,9 @@ async function main() {
     await prisma.homeSmallCard.create({ data: item });
   }
 
-  // Seed for Old Home Small Cards (4 cards for legacy homepage)
-  for (const item of oldHomeSmallCardsData) {
-    await prisma.oldHomeSmallCard.create({ data: item });
+  // Seed for Homepage 2 Small Cards (4 cards for homepage 2)
+  for (const item of homepage2SmallCardsData) {
+    await prisma.homeSmallCard2.create({ data: item });
   }
 
   // Seed for Month Performance
@@ -104,11 +103,6 @@ async function main() {
   // Seed for Revenue Per Country
   for (const item of revenuePerCountryData) {
     await prisma.revenuePerCountry.create({ data: item });
-  }
-
-  // Seed for Regions
-  for (const item of regionsData) {
-    await prisma.region.create({ data: item });
   }
 
   // Seed for Revenue Over Time

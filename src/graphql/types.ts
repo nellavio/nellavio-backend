@@ -8,7 +8,6 @@ import {
 } from "graphql";
 import { GraphQLJSON } from "graphql-type-json";
 
-
 // Asset Type
 export const AssetType = new GraphQLObjectType({
   name: "Asset",
@@ -89,9 +88,9 @@ export const HomeSmallCardType = new GraphQLObjectType({
   }),
 });
 
-// OldHomeSmallCard Type (same structure as HomeSmallCard but separate type)
-export const OldHomeSmallCardType = new GraphQLObjectType({
-  name: "OldHomeSmallCard",
+// HomeSmallCard2 Type (for Homepage 2)
+export const HomeSmallCard2Type = new GraphQLObjectType({
+  name: "HomeSmallCard2",
   fields: () => ({
     id: { type: GraphQLString },
     title: { type: GraphQLString },
@@ -314,12 +313,12 @@ export const HomepageType = new GraphQLObjectType({
   }),
 });
 
-export const OldHomepageType = new GraphQLObjectType({
-  name: "OldHomepage",
+export const Homepage2Type = new GraphQLObjectType({
+  name: "Homepage2",
   fields: () => ({
     bestSellingProducts: { type: new GraphQLList(BestSellingProductType) },
     customerSatisfaction: { type: new GraphQLList(CustomerSatisfactionType) },
-    homeSmallCards: { type: new GraphQLList(OldHomeSmallCardType) },
+    homeSmallCards: { type: new GraphQLList(HomeSmallCard2Type) },
     regions: { type: new GraphQLList(RegionType) },
     revenueOverTime: { type: new GraphQLList(RevenueOverTimeType) },
     revenuePerCountry: { type: new GraphQLList(RevenuePerCountryType) },
