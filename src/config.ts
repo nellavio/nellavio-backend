@@ -18,7 +18,7 @@ interface EnvConfig {
  * Validate environment variables
  * @throws {Error} If required environment variables are missing
  */
-export function validateEnv(): EnvConfig {
+export const validateEnv = (): EnvConfig => {
   const requiredVars = [
     "DATABASE_URL",
     "BETTER_AUTH_SECRET",
@@ -51,13 +51,13 @@ export function validateEnv(): EnvConfig {
   };
 
   return config;
-}
+};
 
 /**
  * Get validated environment config
  * Safe to call after validateEnv()
  */
-export function getEnvConfig(): EnvConfig {
+export const getEnvConfig = (): EnvConfig => {
   return {
     DATABASE_URL: process.env.DATABASE_URL!,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET!,
@@ -67,4 +67,4 @@ export function getEnvConfig(): EnvConfig {
     HOST: process.env.HOST || "0.0.0.0",
     ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || "",
   };
-}
+};

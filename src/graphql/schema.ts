@@ -1,6 +1,6 @@
 import { GraphQLObjectType, GraphQLSchema, GraphQLList } from "graphql";
-import { prisma } from "../db.js";
 
+import { prisma } from "../db.js";
 import {
   AnalyticsType,
   AssetType,

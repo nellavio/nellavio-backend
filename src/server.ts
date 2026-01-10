@@ -8,6 +8,7 @@ import compress from "@fastify/compress";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+
 import { auth } from "./auth.js";
 import schema from "./graphql/schema.js";
 import { validateEnv } from "./config.js";
