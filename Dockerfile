@@ -1,26 +1,40 @@
-# Base Node.js image
-FROM node:18-alpine
+# ---- Build stage ----
+FROM node:22-alpine AS builder
 
-# Set working directory
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+RUN npm ci
 
-# Copy source code
 COPY . .
 
-# Generate Prisma client
 RUN npx prisma generate
 
-# Build the application
 RUN npm run build
 
-# Expose port
+# ---- Production stage ----
+FROM node:22-alpine
+
+ENV NODE_ENV=production
+
+WORKDIR /usr/src/app
+
+COPY --chown=node:node package*.json ./
+
+RUN npm ci --omit=dev
+
+# Copy compiled application from builder
+COPY --chown=node:node --from=builder /usr/src/app/build ./build
+
+# Copy Prisma schema and migrations (needed for prisma migrate deploy)
+COPY --chown=node:node --from=builder /usr/src/app/prisma ./prisma
+
+USER node
+
 EXPOSE 4000
 
-# Start script
-CMD ["npm", "start"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:4000/health || exit 1
+
+CMD ["node", "./build/src/server.js"]
