@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "./src/generated/prisma/client.js";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -9,7 +9,7 @@ async function runMigration() {
     console.log("🔄 Reading migration SQL...");
     const sql = fs.readFileSync(
       path.join(process.cwd(), "manual_migration.sql"),
-      "utf-8"
+      "utf-8",
     );
 
     console.log("🔄 Executing migration...");

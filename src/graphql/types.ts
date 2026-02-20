@@ -143,9 +143,9 @@ export const NotificationType = new GraphQLObjectType({
   }),
 });
 
-// MonthPerformance Type
-export const MonthPerformanceType = new GraphQLObjectType({
-  name: "MonthPerformance",
+// RevenueTrend Type
+export const RevenueTrendType = new GraphQLObjectType({
+  name: "RevenueTrend",
   fields: () => ({
     id: { type: GraphQLString },
     month: { type: GraphQLString },
@@ -277,7 +277,7 @@ export const AnalyticsType = new GraphQLObjectType({
   name: "Analytics",
   fields: () => ({
     assets: { type: new GraphQLList(AssetType) },
-    monthPerformance: { type: new GraphQLList(MonthPerformanceType) },
+    revenueTrends: { type: new GraphQLList(RevenueTrendType) },
     todaySales: { type: new GraphQLList(TodaySalesType) },
     totalProfitProducts: { type: new GraphQLList(TotalProfitProductsType) },
     totalProfitMonths: { type: new GraphQLList(TotalProfitMonthType) },

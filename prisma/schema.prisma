@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -90,13 +91,13 @@ model FourSmallCard {
   @@map("four_small_cards")
 }
 
-model MonthPerformance {
+model RevenueTrend {
   id     String @id @default(uuid())
   month  String
   sales  Float
   profit Float
 
-  @@map("month_performance")
+  @@map("revenue_trends")
 }
 
 model Order {

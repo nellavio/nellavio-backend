@@ -1,6 +1,6 @@
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../src/generated/prisma/client.js";
 
 import { assetPerformanceData } from "../src/data/analytics/assetPerformance.js";
 import { bestSellingProductsData } from "../src/data/homepage/bestSellingProducts.js";
@@ -9,7 +9,7 @@ import { customersData } from "../src/data/customers.js";
 import { eventsData } from "../src/data/events.js";
 import { threeSmallCardsData } from "../src/data/homepage/threeSmallCards.js";
 import { fourSmallCardsData } from "../src/data/homepage/fourSmallCards.js";
-import { performanceData } from "../src/data/analytics/performance.js";
+import { revenueTrendsData } from "../src/data/analytics/revenueTrends.js";
 import { ordersData } from "../src/data/orders.js";
 import { productsData } from "../src/data/products.js";
 import { revenueOverTimeData } from "../src/data/homepage/revenueOverTime.js";
@@ -38,7 +38,7 @@ async function main() {
   await prisma.event.deleteMany();
   await prisma.threeSmallCard.deleteMany();
   await prisma.fourSmallCard.deleteMany();
-  await prisma.monthPerformance.deleteMany();
+  await prisma.revenueTrend.deleteMany();
   await prisma.order.deleteMany();
   await prisma.product.deleteMany();
   await prisma.revenuePerCountry.deleteMany();
@@ -89,9 +89,9 @@ async function main() {
     await prisma.fourSmallCard.create({ data: item });
   }
 
-  // Seed for Month Performance
-  for (const item of performanceData) {
-    await prisma.monthPerformance.create({ data: item });
+  // Seed for Revenue Trends
+  for (const item of revenueTrendsData) {
+    await prisma.revenueTrend.create({ data: item });
   }
 
   // Seed for Orders

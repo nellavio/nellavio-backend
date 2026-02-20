@@ -1,10 +1,10 @@
-type MonthPerformance = {
+type RevenueTrend = {
   month: string;
   sales: number;
   profit: number;
 };
 
-export const performanceData: MonthPerformance[] = [
+export const revenueTrendsData: RevenueTrend[] = [
   { month: "Jan", sales: 2756, profit: 2234 },
   { month: "Feb", sales: 1967, profit: 1445 },
   { month: "Mar", sales: 3543, profit: 2367 },

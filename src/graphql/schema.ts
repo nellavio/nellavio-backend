@@ -12,7 +12,7 @@ import {
   FourSmallCardType,
   HomepageType,
   MarketMetricsType,
-  MonthPerformanceType,
+  RevenueTrendType,
   NotificationType,
   OrderType,
   ProductType,
@@ -72,10 +72,10 @@ const RootQuery = new GraphQLObjectType({
         return prisma.fourSmallCard.findMany();
       },
     },
-    monthPerformance: {
-      type: new GraphQLList(MonthPerformanceType),
+    revenueTrends: {
+      type: new GraphQLList(RevenueTrendType),
       resolve() {
-        return prisma.monthPerformance.findMany();
+        return prisma.revenueTrend.findMany();
       },
     },
     orders: {
@@ -162,7 +162,7 @@ const RootQuery = new GraphQLObjectType({
       resolve() {
         return Promise.all([
           prisma.asset.findMany(),
-          prisma.monthPerformance.findMany(),
+          prisma.revenueTrend.findMany(),
           prisma.todaySales.findMany(),
           prisma.totalProfitProduct.findMany(),
           prisma.totalProfitMonth.findMany(),
@@ -172,7 +172,7 @@ const RootQuery = new GraphQLObjectType({
         ]).then(
           ([
             assets,
-            monthPerformance,
+            revenueTrends,
             todaySales,
             totalProfitProducts,
             totalProfitMonths,
@@ -181,14 +181,14 @@ const RootQuery = new GraphQLObjectType({
             revenueDistribution,
           ]) => ({
             assets,
-            monthPerformance,
+            revenueTrends,
             todaySales,
             totalProfitProducts,
             totalProfitMonths,
             yearOverview,
             marketMetrics,
             revenueDistribution,
-          })
+          }),
         );
       },
     },
@@ -223,7 +223,7 @@ const RootQuery = new GraphQLObjectType({
             revenuePerCountry,
             weeklyPerformance,
             weeklyActivities,
-          })
+          }),
         );
       },
     },
@@ -240,7 +240,7 @@ const schema: GraphQLSchema = new GraphQLSchema({
     EventType,
     ThreeSmallCardType,
     FourSmallCardType,
-    MonthPerformanceType,
+    RevenueTrendType,
     NotificationType,
     OrderType,
     ProductType,

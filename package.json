@@ -1,6 +1,6 @@
 {
   "name": "spireflow-backend",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "Open source backend for Spireflow dashboard",
   "license": "MIT",
   "type": "module",
@@ -12,50 +12,63 @@
   "main": "build/src/server.js",
   "scripts": {
     "postinstall": "echo 'Skipping prisma generate during install'",
-    "build": "tsc",
+    "build": "tsc && node --input-type=commonjs -e \"require('fs').cpSync('src/generated','build/src/generated',{recursive:true})\"",
     "start": "node ./build/src/server.js",
     "dev": "node --watch ./build/src/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
-    "type-check": "tsc --noEmit"
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "prepare": "husky"
   },
   "engines": {
     "node": ">=18.18.0",
     "npm": ">=7.19"
   },
   "dependencies": {
-    "@better-auth/cli": "^1.4.10",
     "@fastify/compress": "^8.3.1",
     "@fastify/cors": "^11.2.0",
     "@fastify/helmet": "^13.0.2",
     "@fastify/rate-limit": "^10.3.0",
-    "@prisma/adapter-pg": "^7.2.0",
-    "@prisma/client": "^7.2.0",
-    "@prisma/extension-accelerate": "^3.0.1",
-    "better-auth": "^1.4.10",
-    "dotenv": "^17.2.3",
-    "fastify": "^5.6.2",
+    "@prisma/adapter-pg": "^7.4.1",
+    "@prisma/client": "^7.4.1",
+    "better-auth": "^1.4.18",
+    "dotenv": "^17.3.1",
+    "fastify": "^5.7.4",
     "graphql": "^16.12.0",
     "graphql-type-json": "^0.3.2",
-    "mercurius": "^16.6.0",
-    "pg": "^8.16.3",
-    "prisma": "^7.2.0",
-    "ts-node": "^10.9.2",
+    "mercurius": "^16.7.0",
+    "pg": "^8.18.0",
+    "prisma": "^7.4.1",
     "typescript": "^5.9.3"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.3.0",
     "@types/pg": "^8.16.0",
-    "@vitest/ui": "^4.0.16",
+    "@vitest/ui": "^4.0.18",
     "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
     "tsx": "^4.21.0",
     "typescript-eslint": "^8.52.0",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18"
   }
 }

@@ -1,19 +1,20 @@
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import eslintConfigPrettier from 'eslint-config-prettier/flat';
+import { defineConfig, globalIgnores } from 'eslint/config';
 
-export default tseslint.config(
+export default defineConfig([
   eslint.configs.recommended,
-  ...tseslint.configs.recommended,
-  {
-    ignores: [
-      'node_modules/**',
-      'build/**',
-      'dist/**',
-      '*.config.js',
-      '*.config.mjs',
-      'coverage/**',
-    ],
-  },
+  tseslint.configs.recommended,
+  globalIgnores([
+    'node_modules/**',
+    'build/**',
+    'dist/**',
+    'src/generated/**',
+    '*.config.js',
+    '*.config.mjs',
+    'coverage/**',
+  ]),
   {
     languageOptions: {
       ecmaVersion: 2022,
@@ -35,5 +36,6 @@ export default tseslint.config(
       'no-console': 'off',
       'no-debugger': 'warn',
     },
-  }
-);
+  },
+  eslintConfigPrettier,
+]);

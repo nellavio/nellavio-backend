@@ -26,7 +26,7 @@ graph LR
 
 ## Frontend
 
-This backend serves data to the Spireflow dashboard via GraphQL API and handles authentication through Better Auth.
+This backend serves data to Spireflow dashboard via GraphQL API and handles authentication through Better Auth.
 
 **Important:** The frontend works independently without backend by default. It will automatically use mock data from `backendBackup.json` and keep routes protection disabled if backend is not configured. You can connect this backend if you want real database functionality and authentication.
 
@@ -61,7 +61,7 @@ Frontend repository: [https://github.com/matt765/spireflow](https://github.com/m
 
 ## How to run
 
-You can deploy this backend on services like AWS, Back4App, Render or Heroku. Alternatively, you can run it locally using commands below and access the data using GraphQL UI http://localhost:4000/graphql or Prisma Studio http://localhost:5555/
+You can deploy this backend on services like AWS, Back4App, Render or Heroku. Alternatively, you can run it locally using commands below and access the data in GraphQL UI http://localhost:4000/graphql or Prisma Studio http://localhost:5555/
 
 ### Localhost
 
@@ -119,11 +119,13 @@ Server will be available at:
 
 **Configuration:**
 
-1. Set `NODE_ENV=production`
+Set up environment variables
+
+1. Generate and set `BETTER_AUTH_SECRET`: `openssl rand -base64 32`
 2. Set `DATABASE_URL` to your PostgreSQL connection string
-3. Generate and set `BETTER_AUTH_SECRET`: `openssl rand -base64 32`
-4. Set `BETTER_AUTH_URL` to your production URL (e.g., `https://your-api.railway.app/api/auth`)
-5. Set `ALLOWED_ORIGINS` to your frontend domain (e.g., `https://your-app.vercel.app`)
+3. Set `BETTER_AUTH_URL` to your production URL (e.g., `https://your-api.app/api/auth`)
+4. Set `ALLOWED_ORIGINS` to your frontend domain (e.g., `https://your-app.vercel.app`)
+5. (Optionally) Set `NODE_ENV=production`
 
 **Build & Start Commands:**
 
@@ -136,16 +138,23 @@ Most platforms will ask for build and start commands. Use the following:
 
 **Tip:** You can also run migrations and seed the remote database from your local machine. Simply set the `DATABASE_URL` in your local `.env` file to your remote database connection string and run `npx prisma migrate deploy` and `npx prisma db seed`.
 
+> Note that commands like `prisma migrate dev` or `prisma db push --force-reset` can reset your database. You can use `prisma migrate deploy` which only applies pending migrations without touching existing data.
+
 ### Available Commands
 
-| Command              | Action                                       |
-| :------------------- | :------------------------------------------- |
-| `npm install`        | Installs dependencies                        |
-| `npm run build`      | Compiles TypeScript to JavaScript            |
-| `npm run dev`        | Starts dev server with hot reload            |
-| `npm start`          | Starts production server at `localhost:4000` |
-| `npm test`           | Runs test suite                              |
-| `npm run test:watch` | Runs tests in watch mode                     |
+| Command                | Action                                       |
+| :--------------------- | :------------------------------------------- |
+| `npm install`          | Installs dependencies                        |
+| `npm run build`        | Compiles TypeScript to JavaScript            |
+| `npm run dev`          | Starts dev server with hot reload            |
+| `npm start`            | Starts production server at `localhost:4000` |
+| `npm test`             | Runs test suite                              |
+| `npm run test:watch`   | Runs tests in watch mode                     |
+| `npm run lint`         | Runs ESLint to check code quality            |
+| `npm run lint:fix`     | Runs ESLint and auto-fixes issues            |
+| `npm run type-check`   | Runs TypeScript type checking                |
+| `npm run format`       | Formats code with Prettier                   |
+| `npm run format:check` | Checks if code is properly formatted         |
 
 ### Prisma
 
@@ -161,17 +170,6 @@ Most platforms will ask for build and start commands. Use the following:
 
 After deploying backend, you can update your front-end `.env` file. Follow front-end README.md for specific instructions.
 
-## Security & Performance
-
-- **Fastify Framework** - High-performance web framework (42k req/s)
-- **Security Headers** - Helmet protection against XSS, clickjacking, and MIME sniffing
-- **Rate Limiting** - DOS attack prevention (100 req/min in production)
-- **CORS Protection** - Origin whitelist with credentials support and preflight caching
-- **Compression** - Gzip/deflate support reducing bandwidth by up to 70%
-- **Query Depth Limiting** - Prevents expensive nested GraphQL queries (max 12 levels)
-- **Prisma ORM** - Built-in SQL injection prevention and connection pooling
-- **Session Management** - Secure authentication with 7-day expiry and 24h refresh
-
 ## Docker support
 
 You can run this application in a containerized environment using Docker, which ensures consistent deployment across different environments and simplifies the setup process by bundling all dependencies together.
@@ -180,3 +178,9 @@ You can run this application in a containerized environment using Docker, which 
 | :----------------------------------------------------------- | :------------------------------------------ |
 | `docker build -t spireflow .`                                | Builds a Docker image from the Dockerfile   |
 | `docker run -p 4000:4000 -e DATABASE_URL="DB_URL" spireflow` | Runs the container with database connection |
+
+## Data viewer
+
+There is a simple data viewer available if you want to take a look at the data in table form. Please note that this backend repository serves as an optional addition to an open-source project focused primarily on the front-end, which is designed to allow you to easily plug in your own backend. As a result, the tables are intentionally simplified and are not meant to represent real-world production database structures.
+
+https://data-viewer.spireflow.app/

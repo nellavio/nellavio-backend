@@ -35,10 +35,11 @@ export const auth = betterAuth({
 
   // Email verification (placeholder)
   emailVerification: {
-    sendVerificationEmail: async ({ user, url, token }) => {
-      console.log(`[Better Auth] Verification email for ${user.email}`);
-      console.log(`[Better Auth] Verification URL: ${url}`);
-      console.log(`[Better Auth] Token: ${token}`);
+    sendVerificationEmail: async ({
+      user: _user,
+      url: _url,
+      token: _token,
+    }) => {
       // TODO: Implement email sending (e.g. SendGrid, AWS SES)
     },
     sendOnSignUp: false,

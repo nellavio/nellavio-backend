@@ -9,7 +9,7 @@ type Asset = {
 
 export const assetPerformanceData: Asset[] = [
   {
-    name: "Off Running Inc.",
+    name: "Quantum Edge Systems",
     industry: "tech",
     sales: 984888,
     delta: 61.3,
@@ -17,7 +17,7 @@ export const assetPerformanceData: Asset[] = [
     status: "emerald",
   },
   {
-    name: "Swan Holding",
+    name: "Ferron Steel AG",
     industry: "health",
     sales: 456700,
     delta: 32.8,
@@ -25,7 +25,7 @@ export const assetPerformanceData: Asset[] = [
     status: "emerald",
   },
   {
-    name: "Blingtech Inc.",
+    name: "Nexora Analytics Inc.",
     industry: "Tech",
     sales: 390800,
     delta: -18.3,
@@ -33,7 +33,7 @@ export const assetPerformanceData: Asset[] = [
     status: "rose",
   },
   {
-    name: "Cortina Steal AG",
+    name: "Velora Holding",
     industry: "manufacturing",
     sales: 240000,
     delta: 19.4,
@@ -41,7 +41,7 @@ export const assetPerformanceData: Asset[] = [
     status: "emerald",
   },
   {
-    name: "Rain Drop Holding",
+    name: "Opal Bridge Holding",
     industry: "health",
     sales: 190800,
     delta: -19.4,
@@ -49,7 +49,7 @@ export const assetPerformanceData: Asset[] = [
     status: "rose",
   },
   {
-    name: "Pas Crazy Inc.",
+    name: "Syntera Technologies Ltd.",
     industry: "tech",
     sales: 164400,
     delta: -32.8,
@@ -57,7 +57,7 @@ export const assetPerformanceData: Asset[] = [
     status: "rose",
   },
   {
-    name: "Hype Room Inc.",
+    name: "Ironpeak Industries Inc.",
     industry: "manufacturing",
     sales: 139800,
     delta: -40.1,
@@ -65,7 +65,7 @@ export const assetPerformanceData: Asset[] = [
     status: "rose",
   },
   {
-    name: "Black Swan Holding",
+    name: "Creston Holding",
     industry: "health",
     sales: 456700,
     delta: 32.8,
