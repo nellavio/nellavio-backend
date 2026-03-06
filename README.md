@@ -102,10 +102,9 @@ npx prisma migrate deploy
 npx prisma db seed
 ```
 
-5. Build and start:
+5. Run the server:
 
 ```bash
-npm run build
 npm run dev
 ```
 
@@ -134,7 +133,7 @@ Most platforms will ask for build and start commands. Use the following:
 - **Build Command:** `npm install && npx prisma generate && npm run build`
 - **Start Command:** `npx prisma migrate deploy && npm start`
 
-> Note: We include `prisma migrate deploy` in the start command to ensure database migrations are applied automatically during deployment.
+> Note: This command `prisma migrate deploy` is included to ensure database migrations are applied automatically during deployment.
 
 **Tip:** You can also run migrations and seed the remote database from your local machine. Simply set the `DATABASE_URL` in your local `.env` file to your remote database connection string and run `npx prisma migrate deploy` and `npx prisma db seed`.
 
@@ -164,6 +163,7 @@ Most platforms will ask for build and start commands. Use the following:
 | `npx prisma migrate deploy`          | Applies existing migrations                            |
 | `npx prisma generate`                | Generates Prisma Client from schema                    |
 | `npx prisma db seed`                 | Seeds database with mock data                          |
+| `npx prisma migrate reset`           | Drops database, re-applies all migrations and seeds    |
 | `npx prisma studio`                  | Opens Prisma Studio at `localhost:5555`                |
 
 ### Connecting Frontend
@@ -172,7 +172,7 @@ After deploying backend, you can update your front-end `.env` file. Follow front
 
 ## Docker support
 
-You can run this application in a containerized environment using Docker, which ensures consistent deployment across different environments and simplifies the setup process by bundling all dependencies together.
+You can run this application in a containerized environment using those Docker commands
 
 | Command                                                      | Action                                      |
 | :----------------------------------------------------------- | :------------------------------------------ |
@@ -181,6 +181,6 @@ You can run this application in a containerized environment using Docker, which 
 
 ## Data viewer
 
-There is a simple data viewer available if you want to take a look at the data in table form. Please note that this backend repository serves as an optional addition to an open-source project focused primarily on the front-end, which is designed to allow you to easily plug in your own backend. As a result, the tables are intentionally simplified and are not meant to represent real-world production database structures.
+There is a simple data viewer available if you want to take a look at the data in table form. Please note that this backend repository serves as an optional addition to an open-source project focused primarily on the front-end part. As a result, the database schema is intentionally simpler than what a real-world production backend would require.
 
 https://data-viewer.spireflow.app/

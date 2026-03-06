@@ -1,3 +1,8 @@
+/**
+ * Prisma Client initialization
+ * Uses PostgreSQL adapter with connection pooling
+ */
+
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 

@@ -4,6 +4,7 @@ import compress from "@fastify/compress";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
+import { fromNodeHeaders } from "better-auth/node";
 import Fastify from "fastify";
 import { readFileSync } from "fs";
 import mercurius from "mercurius";
@@ -15,14 +16,26 @@ import { validateEnv } from "./config.js";
 import { prisma } from "./db.js";
 import schema from "./graphql/schema.js";
 
-// Get package.json for version info
+/**
+ * Extend MercuriusContext with Better Auth session data
+ * Allows accessing session in GraphQL resolvers and hooks
+ */
+type BetterAuthSession = Awaited<ReturnType<typeof auth.api.getSession>>;
+
+declare module "mercurius" {
+  interface MercuriusContext {
+    session: BetterAuthSession;
+  }
+}
+
+/** Get package.json for version info (used in health endpoint) */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const packageJson = JSON.parse(
   readFileSync(join(__dirname, "../../package.json"), "utf-8"),
 );
 
-// Validate environment variables before starting
+/** Validate environment variables before starting */
 validateEnv();
 
 const fastify = Fastify({
@@ -31,19 +44,22 @@ const fastify = Fastify({
   },
 });
 
-// Security: Helmet headers (XSS, clickjacking protection)
+/**
+ * Security: Helmet headers (XSS, clickjacking protection)
+ * CSP disabled in dev for GraphiQL, enabled in production
+ */
 await fastify.register(helmet, {
-  contentSecurityPolicy: false, // Disable for GraphiQL to work
+  contentSecurityPolicy: process.env.NODE_ENV === "production",
   global: true,
 });
 
-// Performance: Compression (gzip/brotli)
+/** Performance: Response compression (gzip/deflate) */
 await fastify.register(compress, {
   global: true,
   encodings: ["gzip", "deflate"],
 });
 
-// Security: Rate limiting (prevent DOS attacks)
+/** Security: Rate limiting to prevent DOS attacks */
 await fastify.register(rateLimit, {
   max: process.env.NODE_ENV === "production" ? 100 : 1000, // 100 req/min in prod
   timeWindow: "1 minute",
@@ -54,11 +70,13 @@ await fastify.register(rateLimit, {
   }),
 });
 
-// CORS configuration
+/** CORS configuration — dynamic origins in production, localhost in dev */
 await fastify.register(cors, {
   origin:
     process.env.NODE_ENV === "production"
-      ? (process.env.ALLOWED_ORIGINS || "").split(",")
+      ? (process.env.ALLOWED_ORIGINS || "")
+          .split(",")
+          .filter((o) => o.trim().length > 0)
       : [
           "http://localhost:3000",
           "http://localhost:4000",
@@ -70,8 +88,10 @@ await fastify.register(cors, {
   maxAge: 86400, // Cache preflight requests for 24 hours
 });
 
-// Better Auth endpoint - Fastify implementation
-// Note: Better Auth expects Fetch API Request, so we convert Fastify request
+/**
+ * Better Auth endpoint
+ * Converts Fastify request to Fetch API Request (required by Better Auth)
+ */
 fastify.all("/api/auth/*", async (request, reply) => {
   try {
     // Construct full URL
@@ -106,7 +126,7 @@ fastify.all("/api/auth/*", async (request, reply) => {
   }
 });
 
-// GraphQL with Mercurius
+/** GraphQL API powered by Mercurius */
 await fastify.register(mercurius, {
   schema,
   graphiql: process.env.NODE_ENV !== "production", // ✅ Disable in production
@@ -115,26 +135,54 @@ await fastify.register(mercurius, {
   // Security: Query complexity limits
   queryDepth: 12, // Prevent deeply nested queries
 
-  // Context function
-  context: (request, reply) => ({
-    request,
-    reply,
-  }),
+  // Context function — extract Better Auth session for auth checks
+  context: async (request, reply) => {
+    try {
+      const session = await auth.api.getSession({
+        headers: fromNodeHeaders(request.headers),
+      });
+      return { request, reply, session };
+    } catch (error) {
+      fastify.log.error({ err: error }, "Session extraction failed");
+      return { request, reply, session: null };
+    }
+  },
 
-  // Error handling
+  // Error handling — sanitize errors in production, full details in dev
   errorFormatter: (execution) => {
     fastify.log.error({ err: execution.errors }, "[GraphQL Error]");
+    const isProduction = process.env.NODE_ENV === "production";
     return {
       statusCode: 200,
       response: {
         data: execution.data || null,
-        errors: execution.errors || [{ message: "Internal server error" }],
+        errors: isProduction
+          ? [{ message: "Internal server error" }]
+          : execution.errors || [{ message: "Internal server error" }],
       },
     };
   },
 });
 
-// Health check endpoint
+/** Security: Require authentication for all GraphQL queries */
+fastify.graphql.addHook("preExecution", async (_schema, _document, context) => {
+  if (!context.session) {
+    return {
+      errors: [
+        new mercurius.ErrorWithProps(
+          "Not authenticated",
+          { code: "UNAUTHENTICATED" },
+          401,
+        ),
+      ],
+    };
+  }
+});
+
+/**
+ * Health check endpoint
+ * Returns full diagnostics in dev, minimal status in production
+ */
 fastify.get("/health", async (request, reply) => {
   const startTime = Date.now();
 
@@ -230,15 +278,21 @@ fastify.get("/health", async (request, reply) => {
     responseTime: `${totalResponseTime}ms`,
   };
 
-  // Return 503 if unhealthy (for load balancers)
-  if (!isHealthy) {
-    return reply.status(503).send(healthData);
+  const statusCode = isHealthy ? 200 : 503;
+
+  // Production: minimal response for load balancers (no internals exposed)
+  if (process.env.NODE_ENV === "production") {
+    return reply.status(statusCode).send({
+      status: isHealthy ? "healthy" : "degraded",
+      ready: isReady,
+    });
   }
 
-  return reply.status(200).send(healthData);
+  // Development: full diagnostics
+  return reply.status(statusCode).send(healthData);
 });
 
-// Graceful shutdown
+/** Graceful shutdown on SIGINT/SIGTERM */
 const signals = ["SIGINT", "SIGTERM"];
 signals.forEach((signal) => {
   process.on(signal, async () => {
@@ -248,7 +302,7 @@ signals.forEach((signal) => {
   });
 });
 
-// Start server
+/** Start server */
 const PORT = Number(process.env.PORT) || 4000;
 const HOST = process.env.HOST || "0.0.0.0";
 

@@ -1,3 +1,8 @@
+/**
+ * Better Auth Configuration
+ * Handles authentication, sessions, and email verification
+ */
+
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
@@ -7,12 +12,12 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:4000/api/auth",
 
-  // Database configuration with Prisma adapter
+  /** Database configuration with Prisma adapter */
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
 
-  // Email/Password authentication
+  /** Email/Password authentication */
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
@@ -20,7 +25,7 @@ export const auth = betterAuth({
     autoSignIn: true,
   },
 
-  // Session configuration
+  /** Session configuration (7-day expiry, daily refresh) */
   session: {
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
@@ -30,17 +35,22 @@ export const auth = betterAuth({
     },
   },
 
-  // Trusted origins (CORS)
-  trustedOrigins: ["http://localhost:3000", "http://localhost:4000"],
+  /** Trusted origins — dynamic in production, reuses ALLOWED_ORIGINS from CORS config */
+  trustedOrigins:
+    process.env.NODE_ENV === "production"
+      ? (process.env.ALLOWED_ORIGINS || "")
+          .split(",")
+          .filter((o) => o.trim().length > 0)
+      : ["http://localhost:3000", "http://localhost:4000"],
 
-  // Email verification (placeholder)
+  /** Email verification (placeholder — implement with SendGrid, AWS SES, etc.) */
   emailVerification: {
     sendVerificationEmail: async ({
       user: _user,
       url: _url,
       token: _token,
     }) => {
-      // TODO: Implement email sending (e.g. SendGrid, AWS SES)
+      // TODO: Implement email sending
     },
     sendOnSignUp: false,
   },

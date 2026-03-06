@@ -33,142 +33,141 @@ const RootQuery = new GraphQLObjectType({
     assets: {
       type: new GraphQLList(AssetType),
       resolve() {
-        return prisma.asset.findMany();
+        return prisma.asset.findMany({ take: 200 });
       },
     },
     bestSellingProducts: {
       type: new GraphQLList(BestSellingProductType),
       resolve() {
-        return prisma.bestSellingProduct.findMany();
+        return prisma.bestSellingProduct.findMany({ take: 200 });
       },
     },
     customers: {
       type: new GraphQLList(CustomerType),
       resolve() {
-        return prisma.customer.findMany();
+        return prisma.customer.findMany({ take: 200 });
       },
     },
     customerSatisfaction: {
       type: new GraphQLList(CustomerSatisfactionType),
       resolve() {
-        return prisma.customerSatisfaction.findMany();
+        return prisma.customerSatisfaction.findMany({ take: 200 });
       },
     },
     events: {
       type: new GraphQLList(EventType),
       resolve() {
-        return prisma.event.findMany();
+        return prisma.event.findMany({ take: 200 });
       },
     },
     threeSmallCards: {
       type: new GraphQLList(ThreeSmallCardType),
       resolve() {
-        return prisma.threeSmallCard.findMany();
+        return prisma.threeSmallCard.findMany({ take: 200 });
       },
     },
     fourSmallCards: {
       type: new GraphQLList(FourSmallCardType),
       resolve() {
-        return prisma.fourSmallCard.findMany();
+        return prisma.fourSmallCard.findMany({ take: 200 });
       },
     },
     revenueTrends: {
       type: new GraphQLList(RevenueTrendType),
       resolve() {
-        return prisma.revenueTrend.findMany();
+        return prisma.revenueTrend.findMany({ take: 200 });
       },
     },
     orders: {
       type: new GraphQLList(OrderType),
       resolve() {
-        return prisma.order.findMany();
+        return prisma.order.findMany({ take: 200 });
       },
     },
     products: {
       type: new GraphQLList(ProductType),
       resolve() {
-        return prisma.product.findMany();
+        return prisma.product.findMany({ take: 200 });
       },
     },
     revenuePerCountry: {
       type: new GraphQLList(RevenuePerCountryType),
       resolve() {
-        return prisma.revenuePerCountry.findMany();
+        return prisma.revenuePerCountry.findMany({ take: 200 });
       },
     },
     revenueOverTime: {
       type: new GraphQLList(RevenueOverTimeType),
       resolve() {
-        return prisma.revenueOverTime.findMany();
+        return prisma.revenueOverTime.findMany({ take: 200 });
       },
     },
     todaySales: {
       type: new GraphQLList(TodaySalesType),
       resolve() {
-        return prisma.todaySales.findMany();
+        return prisma.todaySales.findMany({ take: 200 });
       },
     },
     totalProfitMonths: {
       type: new GraphQLList(TotalProfitMonthType),
       resolve() {
-        return prisma.totalProfitMonth.findMany();
+        return prisma.totalProfitMonth.findMany({ take: 200 });
       },
     },
     totalProfitProducts: {
       type: new GraphQLList(TotalProfitProductsType),
       resolve() {
-        return prisma.totalProfitProduct.findMany();
+        return prisma.totalProfitProduct.findMany({ take: 200 });
       },
     },
-
     yearOverview: {
       type: new GraphQLList(YearOverviewType),
       resolve() {
-        return prisma.yearOverview.findMany();
+        return prisma.yearOverview.findMany({ take: 200 });
       },
     },
     marketMetrics: {
       type: new GraphQLList(MarketMetricsType),
       resolve() {
-        return prisma.marketMetrics.findMany();
+        return prisma.marketMetrics.findMany({ take: 200 });
       },
     },
     revenueDistribution: {
       type: new GraphQLList(RevenueDistributionType),
       resolve() {
-        return prisma.revenueDistribution.findMany();
+        return prisma.revenueDistribution.findMany({ take: 200 });
       },
     },
     weeklyPerformance: {
       type: new GraphQLList(WeeklyPerformanceType),
       resolve() {
-        return prisma.weeklyPerformance.findMany();
+        return prisma.weeklyPerformance.findMany({ take: 200 });
       },
     },
     weeklyActivities: {
       type: new GraphQLList(WeeklyActivityType),
       resolve() {
-        return prisma.weeklyActivity.findMany();
+        return prisma.weeklyActivity.findMany({ take: 200 });
       },
     },
     notifications: {
       type: new GraphQLList(NotificationType),
       resolve() {
-        return prisma.notification.findMany();
+        return prisma.notification.findMany({ take: 200 });
       },
     },
     analytics: {
       type: AnalyticsType,
       resolve() {
         return Promise.all([
-          prisma.asset.findMany(),
-          prisma.revenueTrend.findMany(),
-          prisma.todaySales.findMany(),
-          prisma.totalProfitProduct.findMany(),
-          prisma.totalProfitMonth.findMany(),
-          prisma.yearOverview.findMany(),
-          prisma.marketMetrics.findMany(),
-          prisma.revenueDistribution.findMany(),
+          prisma.asset.findMany({ take: 200 }),
+          prisma.revenueTrend.findMany({ take: 200 }),
+          prisma.todaySales.findMany({ take: 200 }),
+          prisma.totalProfitProduct.findMany({ take: 200 }),
+          prisma.totalProfitMonth.findMany({ take: 200 }),
+          prisma.yearOverview.findMany({ take: 200 }),
+          prisma.marketMetrics.findMany({ take: 200 }),
+          prisma.revenueDistribution.findMany({ take: 200 }),
         ]).then(
           ([
             assets,
@@ -196,14 +195,14 @@ const RootQuery = new GraphQLObjectType({
       type: HomepageType,
       resolve() {
         return Promise.all([
-          prisma.bestSellingProduct.findMany(),
-          prisma.customerSatisfaction.findMany(),
-          prisma.threeSmallCard.findMany(),
-          prisma.fourSmallCard.findMany(),
-          prisma.revenueOverTime.findMany(),
-          prisma.revenuePerCountry.findMany(),
-          prisma.weeklyPerformance.findMany(),
-          prisma.weeklyActivity.findMany(),
+          prisma.bestSellingProduct.findMany({ take: 200 }),
+          prisma.customerSatisfaction.findMany({ take: 200 }),
+          prisma.threeSmallCard.findMany({ take: 200 }),
+          prisma.fourSmallCard.findMany({ take: 200 }),
+          prisma.revenueOverTime.findMany({ take: 200 }),
+          prisma.revenuePerCountry.findMany({ take: 200 }),
+          prisma.weeklyPerformance.findMany({ take: 200 }),
+          prisma.weeklyActivity.findMany({ take: 200 }),
         ]).then(
           ([
             bestSellingProducts,

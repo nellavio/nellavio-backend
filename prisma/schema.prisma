@@ -16,6 +16,7 @@ model Asset {
   deltaType String
   status    String
 
+  @@index([status])
   @@map("assets")
 }
 
@@ -38,6 +39,7 @@ model Customer {
   phone     String
   totalBuys Int
 
+  @@index([country])
   @@map("customers")
 }
 
@@ -110,6 +112,8 @@ model Order {
   date         String
   status       String
 
+  @@index([status])
+  @@index([orderId])
   @@map("orders")
 }
 
@@ -123,6 +127,7 @@ model Product {
   parameters Json
   metrics    Json
 
+  @@index([type])
   @@map("products")
 }
 
@@ -289,5 +294,6 @@ model Verification {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
 
+  @@index([identifier])
   @@map("verification")
 }
