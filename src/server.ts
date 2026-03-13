@@ -88,6 +88,14 @@ await fastify.register(cors, {
   maxAge: 86400, // Cache preflight requests for 24 hours
 });
 
+/** Prevent caching of auth responses (tokens, session data) */
+fastify.addHook("onSend", async (request, reply) => {
+  if (request.url.startsWith("/api/auth/")) {
+    reply.header("Cache-Control", "no-store, no-cache, must-revalidate");
+    reply.header("Pragma", "no-cache");
+  }
+});
+
 /**
  * Better Auth endpoint
  * Converts Fastify request to Fetch API Request (required by Better Auth)
@@ -167,15 +175,11 @@ await fastify.register(mercurius, {
 /** Security: Require authentication for all GraphQL queries */
 fastify.graphql.addHook("preExecution", async (_schema, _document, context) => {
   if (!context.session) {
-    return {
-      errors: [
-        new mercurius.ErrorWithProps(
-          "Not authenticated",
-          { code: "UNAUTHENTICATED" },
-          401,
-        ),
-      ],
-    };
+    throw new mercurius.ErrorWithProps(
+      "Not authenticated",
+      { code: "UNAUTHENTICATED" },
+      401,
+    );
   }
 });
 

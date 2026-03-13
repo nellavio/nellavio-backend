@@ -36,7 +36,7 @@ export const validateEnv = (): EnvConfig => {
     );
   }
 
-  // Set defaults for optional variables
+  /** Set defaults for optional variables */
   const config: EnvConfig = {
     DATABASE_URL: process.env.DATABASE_URL!,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET!,
