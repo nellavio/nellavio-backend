@@ -35,288 +35,309 @@ const packageJson = JSON.parse(
   readFileSync(join(__dirname, "../../package.json"), "utf-8"),
 );
 
-/** Validate environment variables before starting */
-validateEnv();
-
-const fastify = Fastify({
-  logger: {
-    level: "info",
-  },
-});
-
 /**
- * Security: Helmet headers (XSS, clickjacking protection)
- * CSP disabled in dev for GraphiQL, enabled in production
+ * Build and configure Fastify application
+ * Separated from listen() to enable testing via inject()
  */
-await fastify.register(helmet, {
-  contentSecurityPolicy: process.env.NODE_ENV === "production",
-  global: true,
-});
+export const buildApp = async () => {
+  /** Validate environment variables before starting */
+  validateEnv();
 
-/** Performance: Response compression (gzip/deflate) */
-await fastify.register(compress, {
-  global: true,
-  encodings: ["gzip", "deflate"],
-});
+  const fastify = Fastify({
+    logger: {
+      level: "info",
+    },
+  });
 
-/** Security: Rate limiting to prevent DOS attacks */
-await fastify.register(rateLimit, {
-  max: process.env.NODE_ENV === "production" ? 100 : 1000, // 100 req/min in prod
-  timeWindow: "1 minute",
-  errorResponseBuilder: (req, context) => ({
-    statusCode: 429,
-    error: "Too Many Requests",
-    message: `Rate limit exceeded. Try again in ${context.after}`,
-  }),
-});
+  /**
+   * Security: Helmet headers (XSS, clickjacking protection)
+   * CSP disabled in dev for GraphiQL, enabled in production
+   */
+  await fastify.register(helmet, {
+    contentSecurityPolicy: process.env.NODE_ENV === "production",
+    global: true,
+  });
 
-/** CORS configuration — dynamic origins in production, localhost in dev */
-await fastify.register(cors, {
-  origin:
-    process.env.NODE_ENV === "production"
-      ? (process.env.ALLOWED_ORIGINS || "")
-          .split(",")
-          .filter((o) => o.trim().length > 0)
-      : [
-          "http://localhost:3000",
-          "http://localhost:4000",
-          "http://localhost:5004",
-        ],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  maxAge: 86400, // Cache preflight requests for 24 hours
-});
+  /** Performance: Response compression (gzip/deflate) */
+  await fastify.register(compress, {
+    global: true,
+    encodings: ["gzip", "deflate"],
+  });
 
-/** Prevent caching of auth responses (tokens, session data) */
-fastify.addHook("onSend", async (request, reply) => {
-  if (request.url.startsWith("/api/auth/")) {
-    reply.header("Cache-Control", "no-store, no-cache, must-revalidate");
-    reply.header("Pragma", "no-cache");
-  }
-});
+  /** Security: Rate limiting to prevent DOS attacks */
+  await fastify.register(rateLimit, {
+    max: process.env.NODE_ENV === "production" ? 100 : 1000, // 100 req/min in prod
+    timeWindow: "1 minute",
+    errorResponseBuilder: (_req, context) => ({
+      statusCode: 429,
+      error: "Too Many Requests",
+      message: `Rate limit exceeded. Try again in ${context.after}`,
+    }),
+  });
 
-/**
- * Better Auth endpoint
- * Converts Fastify request to Fetch API Request (required by Better Auth)
- */
-fastify.all("/api/auth/*", async (request, reply) => {
-  try {
-    // Construct full URL
-    const url = new URL(request.url, `http://${request.headers.host}`);
+  /** CORS configuration - dynamic origins in production, localhost in dev */
+  await fastify.register(cors, {
+    origin:
+      process.env.NODE_ENV === "production"
+        ? (process.env.ALLOWED_ORIGINS || "")
+            .split(",")
+            .filter((o) => o.trim().length > 0)
+        : [
+            "http://localhost:3000",
+            "http://localhost:4000",
+            "http://localhost:5004",
+          ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    maxAge: 86400, // Cache preflight requests for 24 hours
+  });
 
-    // Convert Fastify headers to standard Headers object
-    const headers = new Headers();
-    Object.entries(request.headers).forEach(([key, value]) => {
-      if (value) headers.append(key, value.toString());
-    });
-
-    // Create Fetch API-compatible request
-    const req = new Request(url.toString(), {
-      method: request.method,
-      headers,
-      body: request.body ? JSON.stringify(request.body) : undefined,
-    });
-
-    // Process authentication request
-    const response = await auth.handler(req);
-
-    // Forward response to client
-    reply.status(response.status);
-    response.headers.forEach((value, key) => reply.header(key, value));
-    return reply.send(response.body ? await response.text() : null);
-  } catch (error) {
-    fastify.log.error({ err: error }, "Better Auth Error");
-    return reply.status(500).send({
-      error: "Internal authentication error",
-      code: "AUTH_FAILURE",
-    });
-  }
-});
-
-/** GraphQL API powered by Mercurius */
-await fastify.register(mercurius, {
-  schema,
-  graphiql: process.env.NODE_ENV !== "production", // ✅ Disable in production
-  path: "/graphql",
-
-  // Security: Query complexity limits
-  queryDepth: 12, // Prevent deeply nested queries
-
-  // Context function — extract Better Auth session for auth checks
-  context: async (request, reply) => {
-    try {
-      const session = await auth.api.getSession({
-        headers: fromNodeHeaders(request.headers),
-      });
-      return { request, reply, session };
-    } catch (error) {
-      fastify.log.error({ err: error }, "Session extraction failed");
-      return { request, reply, session: null };
+  /** Prevent caching of auth responses (tokens, session data) */
+  fastify.addHook("onSend", async (request, reply) => {
+    if (request.url.startsWith("/api/auth/")) {
+      reply.header("Cache-Control", "no-store, no-cache, must-revalidate");
+      reply.header("Pragma", "no-cache");
     }
-  },
+  });
 
-  // Error handling — sanitize errors in production, full details in dev
-  errorFormatter: (execution) => {
-    fastify.log.error({ err: execution.errors }, "[GraphQL Error]");
-    const isProduction = process.env.NODE_ENV === "production";
-    return {
-      statusCode: 200,
-      response: {
-        data: execution.data || null,
-        errors: isProduction
-          ? [{ message: "Internal server error" }]
-          : execution.errors || [{ message: "Internal server error" }],
-      },
-    };
-  },
-});
+  /**
+   * Better Auth endpoint
+   * Converts Fastify request to Fetch API Request (required by Better Auth)
+   */
+  fastify.all("/api/auth/*", async (request, reply) => {
+    try {
+      // Construct full URL
+      const url = new URL(request.url, `http://${request.headers.host}`);
 
-/** Security: Require authentication for all GraphQL queries */
-fastify.graphql.addHook("preExecution", async (_schema, _document, context) => {
-  if (!context.session) {
-    throw new mercurius.ErrorWithProps(
-      "Not authenticated",
-      { code: "UNAUTHENTICATED" },
-      401,
-    );
-  }
-});
+      // Convert Fastify headers to standard Headers object
+      const headers = new Headers();
+      Object.entries(request.headers).forEach(([key, value]) => {
+        if (value) headers.append(key, value.toString());
+      });
 
-/**
- * Health check endpoint
- * Returns full diagnostics in dev, minimal status in production
- */
-fastify.get("/health", async (request, reply) => {
-  const startTime = Date.now();
+      // Create Fetch API-compatible request
+      const req = new Request(url.toString(), {
+        method: request.method,
+        headers,
+        body: request.body ? JSON.stringify(request.body) : undefined,
+      });
 
-  // Check database connection
-  let dbStatus = "healthy";
-  let dbResponseTime = 0;
-  let dbError = null;
-  try {
-    const dbStart = Date.now();
-    await prisma.$queryRaw`SELECT 1`;
-    dbResponseTime = Date.now() - dbStart;
-  } catch (error) {
-    dbStatus = "unhealthy";
-    dbError = error instanceof Error ? error.message : "Unknown error";
-    fastify.log.error({ err: error }, "Database health check failed");
-  }
+      // Process authentication request
+      const response = await auth.handler(req);
 
-  // Calculate uptime
-  const uptime = process.uptime();
+      // Forward response to client
+      reply.status(response.status);
+      response.headers.forEach((value, key) => reply.header(key, value));
+      return reply.send(response.body ? await response.text() : null);
+    } catch (error) {
+      fastify.log.error({ err: error }, "Better Auth Error");
+      return reply.status(500).send({
+        error: "Internal authentication error",
+        code: "AUTH_FAILURE",
+      });
+    }
+  });
 
-  // Memory usage with percentage
-  const memoryUsage = process.memoryUsage();
-  const heapUsedPercent = Math.round(
-    (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100,
+  /** GraphQL API powered by Mercurius */
+  await fastify.register(mercurius, {
+    schema,
+    graphiql: process.env.NODE_ENV !== "production", // ✅ Disable in production
+    path: "/graphql",
+
+    // Security: Query complexity limits
+    queryDepth: 12, // Prevent deeply nested queries
+
+    // Context function - extract Better Auth session for auth checks
+    context: async (request, reply) => {
+      try {
+        const session = await auth.api.getSession({
+          headers: fromNodeHeaders(request.headers),
+        });
+        return { request, reply, session };
+      } catch (error) {
+        fastify.log.error({ err: error }, "Session extraction failed");
+        return { request, reply, session: null };
+      }
+    },
+
+    // Error handling - sanitize errors in production, full details in dev
+    errorFormatter: (execution) => {
+      fastify.log.error({ err: execution.errors }, "[GraphQL Error]");
+      const isProduction = process.env.NODE_ENV === "production";
+      return {
+        statusCode: 200,
+        response: {
+          data: execution.data || null,
+          errors: isProduction
+            ? [{ message: "Internal server error" }]
+            : execution.errors || [{ message: "Internal server error" }],
+        },
+      };
+    },
+  });
+
+  /** Security: Require authentication for all GraphQL queries */
+  fastify.graphql.addHook(
+    "preExecution",
+    async (_schema, _document, context) => {
+      if (!context.session) {
+        throw new mercurius.ErrorWithProps(
+          "Not authenticated",
+          { code: "UNAUTHENTICATED" },
+          401,
+        );
+      }
+    },
   );
-  const memoryUsageMB = {
-    rss: Math.round(memoryUsage.rss / 1024 / 1024),
-    heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
-    heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
-    heapUsedPercent: `${heapUsedPercent}%`,
-    external: Math.round(memoryUsage.external / 1024 / 1024),
-    arrayBuffers: Math.round(memoryUsage.arrayBuffers / 1024 / 1024),
-  };
 
-  // CPU usage (in microseconds)
-  const cpuUsage = process.cpuUsage();
-  const cpuUsageMs = {
-    user: Math.round(cpuUsage.user / 1000), // Convert to milliseconds
-    system: Math.round(cpuUsage.system / 1000),
-    total: Math.round((cpuUsage.user + cpuUsage.system) / 1000),
-  };
+  /**
+   * Health check endpoint
+   * Returns full diagnostics in dev, minimal status in production
+   */
+  fastify.get("/health", async (_request, reply) => {
+    const startTime = Date.now();
 
-  const totalResponseTime = Date.now() - startTime;
-  const isHealthy = dbStatus === "healthy";
-  const isReady = isHealthy; // Ready to serve traffic only if DB is healthy
+    // Check database connection
+    let dbStatus = "healthy";
+    let dbResponseTime = 0;
+    let dbError = null;
+    try {
+      const dbStart = Date.now();
+      await prisma.$queryRaw`SELECT 1`;
+      dbResponseTime = Date.now() - dbStart;
+    } catch (error) {
+      dbStatus = "unhealthy";
+      dbError = error instanceof Error ? error.message : "Unknown error";
+      fastify.log.error({ err: error }, "Database health check failed");
+    }
 
-  const healthData = {
-    status: isHealthy ? "healthy" : "degraded",
-    ready: isReady,
-    alive: true, // Process is alive since it's responding
-    timestamp: new Date().toISOString(),
+    // Calculate uptime
+    const uptime = process.uptime();
 
-    version: {
-      api: packageJson.version,
-      name: packageJson.name,
-      node: process.version,
-    },
+    // Memory usage with percentage
+    const memoryUsage = process.memoryUsage();
+    const heapUsedPercent = Math.round(
+      (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100,
+    );
+    const memoryUsageMB = {
+      rss: Math.round(memoryUsage.rss / 1024 / 1024),
+      heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+      heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+      heapUsedPercent: `${heapUsedPercent}%`,
+      external: Math.round(memoryUsage.external / 1024 / 1024),
+      arrayBuffers: Math.round(memoryUsage.arrayBuffers / 1024 / 1024),
+    };
 
-    uptime: {
-      seconds: Math.round(uptime),
-      human: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`,
-    },
+    // CPU usage (in microseconds)
+    const cpuUsage = process.cpuUsage();
+    const cpuUsageMs = {
+      user: Math.round(cpuUsage.user / 1000), // Convert to milliseconds
+      system: Math.round(cpuUsage.system / 1000),
+      total: Math.round((cpuUsage.user + cpuUsage.system) / 1000),
+    };
 
-    database: {
-      status: dbStatus,
-      responseTime: `${dbResponseTime}ms`,
-      ...(dbError && { error: dbError }),
-    },
+    const totalResponseTime = Date.now() - startTime;
+    const isHealthy = dbStatus === "healthy";
+    const isReady = isHealthy; // Ready to serve traffic only if DB is healthy
 
-    memory: {
-      usage: memoryUsageMB,
-      unit: "MB",
-    },
-
-    cpu: {
-      usage: cpuUsageMs,
-      unit: "milliseconds",
-    },
-
-    process: {
-      pid: process.pid,
-      platform: process.platform,
-      arch: process.arch,
-      environment: process.env.NODE_ENV || "development",
-    },
-
-    endpoints: {
-      graphql: "/graphql",
-      auth: "/api/auth/*",
-      health: "/health",
-    },
-
-    responseTime: `${totalResponseTime}ms`,
-  };
-
-  const statusCode = isHealthy ? 200 : 503;
-
-  // Production: minimal response for load balancers (no internals exposed)
-  if (process.env.NODE_ENV === "production") {
-    return reply.status(statusCode).send({
+    const healthData = {
       status: isHealthy ? "healthy" : "degraded",
       ready: isReady,
-    });
-  }
+      alive: true, // Process is alive since it's responding
+      timestamp: new Date().toISOString(),
 
-  // Development: full diagnostics
-  return reply.status(statusCode).send(healthData);
-});
+      version: {
+        api: packageJson.version,
+        name: packageJson.name,
+        node: process.version,
+      },
 
-/** Graceful shutdown on SIGINT/SIGTERM */
-const signals = ["SIGINT", "SIGTERM"];
-signals.forEach((signal) => {
-  process.on(signal, async () => {
-    fastify.log.info(`Received ${signal}, closing server...`);
-    await fastify.close();
-    process.exit(0);
+      uptime: {
+        seconds: Math.round(uptime),
+        human: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`,
+      },
+
+      database: {
+        status: dbStatus,
+        responseTime: `${dbResponseTime}ms`,
+        ...(dbError && { error: dbError }),
+      },
+
+      memory: {
+        usage: memoryUsageMB,
+        unit: "MB",
+      },
+
+      cpu: {
+        usage: cpuUsageMs,
+        unit: "milliseconds",
+      },
+
+      process: {
+        pid: process.pid,
+        platform: process.platform,
+        arch: process.arch,
+        environment: process.env.NODE_ENV || "development",
+      },
+
+      endpoints: {
+        graphql: "/graphql",
+        auth: "/api/auth/*",
+        health: "/health",
+      },
+
+      responseTime: `${totalResponseTime}ms`,
+    };
+
+    const statusCode = isHealthy ? 200 : 503;
+
+    // Production: minimal response for load balancers (no internals exposed)
+    if (process.env.NODE_ENV === "production") {
+      return reply.status(statusCode).send({
+        status: isHealthy ? "healthy" : "degraded",
+        ready: isReady,
+      });
+    }
+
+    // Development: full diagnostics
+    return reply.status(statusCode).send(healthData);
   });
-});
 
-/** Start server */
-const PORT = Number(process.env.PORT) || 4000;
-const HOST = process.env.HOST || "0.0.0.0";
+  return fastify;
+};
 
-try {
-  await fastify.listen({ port: PORT, host: HOST });
-  console.log("🚀 Spireflow Backend (Fastify) started");
-  console.log(`📊 GraphQL endpoint: http://localhost:${PORT}/graphql`);
-  console.log(`🔐 Better Auth endpoint: http://localhost:${PORT}/api/auth/*`);
-  console.log(`💚 Health check: http://localhost:${PORT}/health`);
-} catch (err) {
-  fastify.log.error(err);
-  process.exit(1);
+/** Start server (only when run directly, not when imported for testing) */
+const isDirectRun =
+  process.argv[1] &&
+  (process.argv[1].endsWith("server.js") ||
+    process.argv[1].endsWith("server.ts"));
+
+if (isDirectRun) {
+  const fastify = await buildApp();
+
+  /** Graceful shutdown on SIGINT/SIGTERM */
+  const signals = ["SIGINT", "SIGTERM"];
+  signals.forEach((signal) => {
+    process.on(signal, async () => {
+      fastify.log.info(`Received ${signal}, closing server...`);
+      await fastify.close();
+      process.exit(0);
+    });
+  });
+
+  /** Start server */
+  const PORT = Number(process.env.PORT) || 4000;
+  const HOST = process.env.HOST || "0.0.0.0";
+
+  try {
+    await fastify.listen({ port: PORT, host: HOST });
+    console.log("🚀 Spireflow Backend (Fastify) started");
+    console.log(`📊 GraphQL endpoint: http://localhost:${PORT}/graphql`);
+    console.log(`🔐 Better Auth endpoint: http://localhost:${PORT}/api/auth/*`);
+    console.log(`💚 Health check: http://localhost:${PORT}/health`);
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
 }

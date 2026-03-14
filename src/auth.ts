@@ -35,7 +35,7 @@ export const auth = betterAuth({
     },
   },
 
-  /** Trusted origins — dynamic in production, reuses ALLOWED_ORIGINS from CORS config */
+  /** Trusted origins - dynamic in production, reuses ALLOWED_ORIGINS from CORS config */
   trustedOrigins:
     process.env.NODE_ENV === "production"
       ? (process.env.ALLOWED_ORIGINS || "")
@@ -43,7 +43,7 @@ export const auth = betterAuth({
           .filter((o) => o.trim().length > 0)
       : ["http://localhost:3000", "http://localhost:4000"],
 
-  /** Email verification (placeholder — implement with SendGrid, AWS SES, etc.) */
+  /** Email verification (placeholder - implement with SendGrid, AWS SES, etc.) */
   emailVerification: {
     sendVerificationEmail: async ({
       user: _user,

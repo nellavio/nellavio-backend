@@ -8,7 +8,7 @@
     "strict": true,
     "skipLibCheck": true,
     "outDir": "./build",
-    "types": ["node"],
+    "types": ["node", "vitest/globals"],
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true
   },
