@@ -6,7 +6,7 @@ import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import { fromNodeHeaders } from "better-auth/node";
 import Fastify from "fastify";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import mercurius from "mercurius";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -31,9 +31,10 @@ declare module "mercurius" {
 /** Get package.json for version info (used in health endpoint) */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const packageJson = JSON.parse(
-  readFileSync(join(__dirname, "../../package.json"), "utf-8"),
-);
+const packageJsonPath = existsSync(join(__dirname, "../../package.json"))
+  ? join(__dirname, "../../package.json")
+  : join(__dirname, "../package.json");
+const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
 
 /**
  * Build and configure Fastify application
