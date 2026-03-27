@@ -23,9 +23,9 @@
 
 ## Overview
 
-It provides data for [Nellavio](https://github.com/nellavio/nellavio) — an open source dashboard starter built with Next.js & TypeScript. The GraphQL API serves 20+ queries covering homepage metrics, orders, customers, products, analytics and more, while the Better Auth enables production-ready authentication flow, handling session management and user credentials.
+It provides data for [Nellavio](https://github.com/nellavio/nellavio) - an open source dashboard starter built with Next.js & TypeScript. The GraphQL API serves 20+ queries covering homepage metrics, orders, customers, products, analytics and more, while the Better Auth enables production-ready authentication flow, handling session management and user credentials.
 
-The frontend works independently by default — it loads mock data from `backendBackup.json` and keeps route protection disabled. Connecting this backend enables real database functionality, live data fetching on each request and a complete authentication system.
+The frontend works independently by default - it loads mock data from `backendBackup.json` and keeps route protection disabled. Connecting this backend enables real database functionality, live data fetching on each request and a complete authentication system.
 
 ## Tech stack
 

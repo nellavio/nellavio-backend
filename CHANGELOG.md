@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 (16-03-2026)
+## 2.0.0 (29-03-2026)
 
 - added Better-Auth
 - migrated from Express to Fastify

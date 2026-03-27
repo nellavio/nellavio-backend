@@ -61,7 +61,7 @@ Husky pre-commit hooks will automatically run ESLint and Prettier on staged file
 
 ### What makes a good PR
 
-- Focused — one concern per PR
+- Focused - one concern per PR
 - Passes all CI checks (lint, type-check, tests, build)
 - No breaking changes to the GraphQL schema without discussion
 - New environment variables documented in the PR description
